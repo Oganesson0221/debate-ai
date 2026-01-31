@@ -90,3 +90,7 @@
 - [x] Fix useAIReferee infinite loop error (Maximum update depth exceeded)
 - [x] Fix speech detection not working in debate room
 - [x] Add audio level meter to show microphone input levels
+- [ ] Push project to GitHub
+- [x] Fix transcription not appearing on screen when speaking
+- [x] Fix microphone permission not being requested
+- [x] Add admin mode to play all speaker roles for testing

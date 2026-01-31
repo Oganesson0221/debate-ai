@@ -245,9 +245,14 @@ export default function DebateRoom() {
 
   // Recording functions with real-time transcription
   const startRecording = async () => {
+    console.log('[Recording] Starting recording...');
+    toast.info('Requesting microphone access...');
+    
     try {
       // Request microphone access
+      console.log('[Recording] Requesting getUserMedia...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('[Recording] Microphone access granted!');
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -363,9 +368,17 @@ export default function DebateRoom() {
       if (refereeEnabled) {
         referee.announceSpeaker(currentSpeaker);
       }
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast.error("Failed to access microphone. Please check permissions.");
+    } catch (error: any) {
+      console.error('[Recording] Error:', error);
+      if (error.name === 'NotAllowedError') {
+        toast.error("Microphone access denied. Please allow microphone access in your browser settings.");
+      } else if (error.name === 'NotFoundError') {
+        toast.error("No microphone found. Please connect a microphone and try again.");
+      } else if (error.name === 'NotReadableError') {
+        toast.error("Microphone is in use by another application.");
+      } else {
+        toast.error(`Failed to access microphone: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 
@@ -491,9 +504,12 @@ export default function DebateRoom() {
   const govTeam = participants.filter(p => p.team === "government");
   const oppTeam = participants.filter(p => p.team === "opposition");
   const isCreator = session?.createdBy === user?.id;
+  const isAdmin = user?.role === 'admin';
   // In testing mode, allow starting with any participants; otherwise need 6
   const canStart = isCreator && session?.status === "waiting" && (testingMode || participants.length >= 6);
   const isMyTurn = currentParticipant?.speakerRole === currentSpeaker && session?.status === "in_progress";
+  // Admin can always speak in testing mode
+  const canSpeak = isMyTurn || (testingMode && session?.status === "in_progress" && isAdmin);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -532,6 +548,11 @@ export default function DebateRoom() {
               <Users className="h-5 w-5" />
               <span className="font-bold">{participants.length}/6</span>
             </div>
+            {isAdmin && testingMode && (
+              <div className="flex items-center gap-2 bg-yellow-500 text-black px-3 py-1">
+                <span className="text-xs font-black uppercase">Admin Mode</span>
+              </div>
+            )}
             <span className={`px-3 py-1 text-sm font-black uppercase ${
               session?.status === "waiting" 
                 ? "bg-muted" 
@@ -783,16 +804,32 @@ export default function DebateRoom() {
             </div>
           </div>
 
-          {/* Recording Controls - Show for assigned speaker OR in testing mode */}
-          {(isMyTurn || (testingMode && session?.status === "in_progress")) && (
+          {/* Recording Controls - Show for assigned speaker OR admin in testing mode */}
+          {canSpeak && (
             <div className="border-t-4 border-foreground p-6 shrink-0 bg-foreground text-background">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="font-black uppercase">
-                    {isMyTurn ? "Your Turn to Speak" : `Speaking as ${SPEAKER_NAMES[currentSpeaker]}`}
-                  </p>
+                  <div className="flex items-center gap-4 mb-2">
+                    <p className="font-black uppercase">
+                      {isMyTurn ? "Your Turn to Speak" : `Speaking as ${SPEAKER_NAMES[currentSpeaker]}`}
+                    </p>
+                    {/* Admin speaker role selector */}
+                    {isAdmin && testingMode && !isRecording && (
+                      <select
+                        value={currentSpeakerIndex}
+                        onChange={(e) => setCurrentSpeakerIndex(Number(e.target.value))}
+                        className="bg-background text-foreground px-3 py-1 font-bold uppercase text-sm border-2 border-background"
+                      >
+                        {AP_SPEAKER_ORDER.map((role, idx) => (
+                          <option key={role} value={idx}>
+                            {SPEAKER_NAMES[role]}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <p className="text-sm opacity-70">
-                    {isRecording ? "Recording & transcribing..." : "Click to start speaking"}
+                    {isRecording ? "Recording & transcribing..." : "Click to start speaking"}  
                   </p>
                   
                   {/* Audio Level Meter */}
