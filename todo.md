@@ -1,0 +1,66 @@
+# DebateAI - Project TODO
+
+## Core Infrastructure
+- [x] Database schema for debates, speeches, arguments, metrics
+- [x] User authentication and session management
+- [x] WebSocket/Socket.io setup for real-time features
+
+## Debate Room Features
+- [x] Live debate room creation and joining
+- [x] Asian Parliamentary format support (2 teams, 3 debaters each)
+- [x] Speaker order management (PM, DPM, GW, LO, DLO, OW, Reply)
+- [x] Real-time participant presence tracking
+
+## AI Motion Generation
+- [x] Motion generation based on topic, difficulty, format
+- [x] Background context and stakeholder generation
+- [x] Topic categories (politics, ethics, tech, economics)
+
+## Timekeeping & Moderation
+- [x] Automated speaker announcements
+- [x] Speech timer with protected time handling
+- [x] POI (Points of Information) management
+- [x] Rule violation detection and flagging
+
+## Real-Time Transcription
+- [x] WebRTC audio streaming setup
+- [x] Speech-to-text transcription integration
+- [x] Speaker label assignment
+- [x] Timestamp segmentation
+
+## Argument Mindmap
+- [x] Argument extraction from transcripts
+- [x] Interactive argument graph visualization
+- [x] Relationship mapping (supports, rebuts, clashes)
+- [x] Clickable nodes with transcript excerpts
+- [x] Quality scoring for arguments
+
+## Post-Debate Feedback
+- [x] AI-powered feedback generation
+- [x] Strongest arguments identification
+- [x] Missed responses detection
+- [x] Improvement suggestions (logic, clarity, weighing)
+- [x] Debate summary and clash analysis
+
+## Progress Tracking Dashboard
+- [x] User metrics tracking (responsiveness, rebuttal quality)
+- [x] Argument completeness scoring (claim-mechanism-impact)
+- [x] Role fulfillment analysis
+- [x] Historical trends visualization
+- [x] Improvement tracking over time
+
+## Notifications
+- [ ] Email notifications for completed debates
+- [ ] Performance summary notifications
+- [ ] Milestone achievement alerts
+
+## UI/UX (Brutalist Design)
+- [x] Landing page with brutalist typography
+- [x] Debate room interface
+- [x] Transcript panel
+- [x] Argument mindmap panel
+- [x] Feedback dashboard
+- [x] Progress tracking dashboard
+
+## Testing
+- [x] Unit tests for core functionality

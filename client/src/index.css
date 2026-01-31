@@ -4,10 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,84 +42,111 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Brutalist Light Theme - Stark black on white */
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --radius: 0;
+  --background: oklch(100% 0 0);
+  --foreground: oklch(0% 0 0);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(0% 0 0);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(0% 0 0);
+  --primary: oklch(0% 0 0);
+  --primary-foreground: oklch(100% 0 0);
+  --secondary: oklch(96% 0 0);
+  --secondary-foreground: oklch(0% 0 0);
+  --muted: oklch(96% 0 0);
+  --muted-foreground: oklch(40% 0 0);
+  --accent: oklch(96% 0 0);
+  --accent-foreground: oklch(0% 0 0);
+  --destructive: oklch(53% 0.22 29);
+  --destructive-foreground: oklch(100% 0 0);
+  --border: oklch(0% 0 0);
+  --input: oklch(0% 0 0);
+  --ring: oklch(0% 0 0);
+  --chart-1: oklch(0% 0 0);
+  --chart-2: oklch(25% 0 0);
+  --chart-3: oklch(50% 0 0);
+  --chart-4: oklch(75% 0 0);
+  --chart-5: oklch(90% 0 0);
+  --sidebar: oklch(100% 0 0);
+  --sidebar-foreground: oklch(0% 0 0);
+  --sidebar-primary: oklch(0% 0 0);
+  --sidebar-primary-foreground: oklch(100% 0 0);
+  --sidebar-accent: oklch(96% 0 0);
+  --sidebar-accent-foreground: oklch(0% 0 0);
+  --sidebar-border: oklch(0% 0 0);
+  --sidebar-ring: oklch(0% 0 0);
+  
+  /* Custom brutalist colors */
+  --government: oklch(0% 0 0);
+  --opposition: oklch(45% 0 0);
+  --success: oklch(45% 0.15 145);
+  --warning: oklch(75% 0.18 85);
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --background: oklch(0% 0 0);
+  --foreground: oklch(100% 0 0);
+  --card: oklch(10% 0 0);
+  --card-foreground: oklch(100% 0 0);
+  --popover: oklch(10% 0 0);
+  --popover-foreground: oklch(100% 0 0);
+  --primary: oklch(100% 0 0);
+  --primary-foreground: oklch(0% 0 0);
+  --secondary: oklch(15% 0 0);
+  --secondary-foreground: oklch(100% 0 0);
+  --muted: oklch(20% 0 0);
+  --muted-foreground: oklch(65% 0 0);
+  --accent: oklch(20% 0 0);
+  --accent-foreground: oklch(100% 0 0);
+  --destructive: oklch(60% 0.22 29);
+  --destructive-foreground: oklch(100% 0 0);
+  --border: oklch(100% 0 0);
+  --input: oklch(100% 0 0);
+  --ring: oklch(100% 0 0);
+  --sidebar: oklch(5% 0 0);
+  --sidebar-foreground: oklch(100% 0 0);
+  --sidebar-primary: oklch(100% 0 0);
+  --sidebar-primary-foreground: oklch(0% 0 0);
+  --sidebar-accent: oklch(15% 0 0);
+  --sidebar-accent-foreground: oklch(100% 0 0);
+  --sidebar-border: oklch(100% 0 0);
+  --sidebar-ring: oklch(100% 0 0);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "ss01", "ss02", "cv01";
   }
+  
+  /* Brutalist typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-black tracking-tighter uppercase;
+    letter-spacing: -0.05em;
+  }
+  
+  h1 {
+    @apply text-5xl md:text-7xl lg:text-8xl;
+    line-height: 0.85;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-5xl lg:text-6xl;
+    line-height: 0.9;
+  }
+  
+  h3 {
+    @apply text-xl md:text-3xl lg:text-4xl;
+    line-height: 0.95;
+  }
+  
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -134,25 +161,12 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
-    padding-right: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .flex {
@@ -162,16 +176,184 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      padding-left: 3rem;
+      padding-right: 3rem;
+      max-width: 1400px;
     }
   }
 }
+
+@layer utilities {
+  /* Brutalist borders */
+  .brutalist-border {
+    @apply border-4 border-foreground;
+  }
+  
+  .brutalist-border-thick {
+    @apply border-8 border-foreground;
+  }
+  
+  /* Brutalist shadows */
+  .brutalist-shadow {
+    box-shadow: 8px 8px 0 0 var(--foreground);
+  }
+  
+  .brutalist-shadow-lg {
+    box-shadow: 16px 16px 0 0 var(--foreground);
+  }
+  
+  .brutalist-shadow-hover:hover {
+    box-shadow: 12px 12px 0 0 var(--foreground);
+    transform: translate(-4px, -4px);
+  }
+  
+  /* Massive typography */
+  .text-massive {
+    font-size: clamp(3rem, 12vw, 10rem);
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  
+  .text-display {
+    font-size: clamp(2rem, 6vw, 5rem);
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  
+  /* Bracket decorations */
+  .brutalist-bracket::before {
+    content: "[";
+    @apply mr-2 font-black text-muted-foreground;
+  }
+  
+  .brutalist-bracket::after {
+    content: "]";
+    @apply ml-2 font-black text-muted-foreground;
+  }
+  
+  /* Team colors */
+  .team-gov {
+    @apply bg-foreground text-background;
+  }
+  
+  .team-opp {
+    @apply bg-muted-foreground text-background;
+  }
+  
+  /* Timer states */
+  .timer-warning {
+    color: var(--warning);
+  }
+  
+  .timer-danger {
+    @apply text-destructive;
+  }
+  
+  /* Underline decoration */
+  .brutalist-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 8px;
+  }
+  
+  /* Strikethrough */
+  .brutalist-strike {
+    text-decoration: line-through;
+    text-decoration-thickness: 4px;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Selection */
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* Animations */
+@keyframes brutalist-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-brutalist-appear {
+  animation: brutalist-appear 0.4s ease-out forwards;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: var(--foreground);
+  }
+  50% {
+    border-color: var(--muted-foreground);
+  }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Google Fonts - Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
