@@ -53,6 +53,7 @@ export default function DebateRoom() {
   const [testingMode, setTestingMode] = useState(true); // Default to testing mode
   const [refereeEnabled, setRefereeEnabled] = useState(true);
   const [lastAnnouncedTime, setLastAnnouncedTime] = useState<number | null>(null);
+  const [interimTranscript, setInterimTranscript] = useState<string>("");
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -266,29 +267,36 @@ export default function DebateRoom() {
         recognition.lang = 'en-US';
         
         recognition.onresult = (event: any) => {
-          let finalTranscript = '';
-          let interimTranscript = '';
+          let finalText = '';
+          let interimText = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              finalTranscript += transcript;
+              finalText += transcript;
             } else {
-              interimTranscript += transcript;
+              interimText += transcript;
             }
           }
           
-          if (finalTranscript) {
-            // Add to local transcripts
+          // Update interim transcript for live display
+          setInterimTranscript(interimText);
+          
+          if (finalText) {
+            // Clear interim and add to final transcripts
+            setInterimTranscript('');
             const newTranscript = {
               speaker: SPEAKER_NAMES[currentSpeaker] || 'Unknown',
-              text: finalTranscript,
+              text: finalText,
               timestamp: timer * 1000,
             };
             setAllTranscripts(prev => [...prev, newTranscript]);
             
             // Send to other participants
-            socket.sendTranscriptUpdate(0, finalTranscript, timer * 1000);
+            socket.sendTranscriptUpdate(0, finalText, timer * 1000);
+            
+            // Log for debugging
+            console.log('[Speech] Final transcript:', finalText);
           }
         };
         
@@ -332,6 +340,9 @@ export default function DebateRoom() {
   };
 
   const stopRecording = () => {
+    // Clear interim transcript
+    setInterimTranscript('');
+    
     // Stop speech recognition
     if (recognitionRef.current) {
       try {
@@ -692,13 +703,19 @@ export default function DebateRoom() {
 
           {/* Transcript Area */}
           <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="p-4 border-b-4 border-foreground shrink-0">
+            <div className="p-4 border-b-4 border-foreground shrink-0 flex items-center justify-between">
               <h3 className="font-black uppercase tracking-wider text-sm">Live Transcript</h3>
+              {isRecording && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                  <span className="font-bold uppercase text-destructive">Listening</span>
+                </div>
+              )}
             </div>
             <div className="flex-1 p-4 overflow-y-auto">
-              {allTranscripts.length === 0 ? (
+              {allTranscripts.length === 0 && !interimTranscript ? (
                 <p className="text-muted-foreground text-center py-12">
-                  Transcripts will appear here during the debate...
+                  {isRecording ? "Speak now... listening for your voice" : "Transcripts will appear here during the debate..."}
                 </p>
               ) : (
                 <div className="space-y-4">
@@ -710,41 +727,60 @@ export default function DebateRoom() {
                       <p>{t.text}</p>
                     </div>
                   ))}
+                  {/* Show interim transcript while speaking */}
+                  {interimTranscript && (
+                    <div className="brutalist-border p-4 border-dashed opacity-70">
+                      <p className="text-sm font-black uppercase text-muted-foreground mb-1">
+                        {SPEAKER_NAMES[currentSpeaker]} • {formatTime(timer)} (typing...)
+                      </p>
+                      <p className="italic">{interimTranscript}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Recording Controls */}
-          {isMyTurn && (
+          {/* Recording Controls - Show for assigned speaker OR in testing mode */}
+          {(isMyTurn || (testingMode && session?.status === "in_progress")) && (
             <div className="border-t-4 border-foreground p-6 shrink-0 bg-foreground text-background">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-black uppercase">Your Turn to Speak</p>
+                  <p className="font-black uppercase">
+                    {isMyTurn ? "Your Turn to Speak" : `Speaking as ${SPEAKER_NAMES[currentSpeaker]}`}
+                  </p>
                   <p className="text-sm opacity-70">
-                    {isRecording ? "Recording in progress..." : "Click to start speaking"}
+                    {isRecording ? "Recording & transcribing..." : "Click to start speaking"}
                   </p>
                 </div>
-                <Button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={`brutalist-border px-8 py-6 h-auto uppercase font-black text-lg ${
-                    isRecording 
-                      ? "bg-destructive text-destructive-foreground border-destructive" 
-                      : "bg-background text-foreground"
-                  }`}
-                >
-                  {isRecording ? (
-                    <>
-                      <MicOff className="h-6 w-6 mr-2" />
-                      Stop
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-6 w-6 mr-2" />
-                      Start Speaking
-                    </>
+                <div className="flex items-center gap-4">
+                  {isRecording && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-destructive rounded-full animate-pulse" />
+                      <span className="text-sm font-bold uppercase">Live</span>
+                    </div>
                   )}
-                </Button>
+                  <Button
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`brutalist-border px-8 py-6 h-auto uppercase font-black text-lg ${
+                      isRecording 
+                        ? "bg-destructive text-destructive-foreground border-destructive" 
+                        : "bg-background text-foreground"
+                    }`}
+                  >
+                    {isRecording ? (
+                      <>
+                        <MicOff className="h-6 w-6 mr-2" />
+                        Stop
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-6 w-6 mr-2" />
+                        Start Speaking
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

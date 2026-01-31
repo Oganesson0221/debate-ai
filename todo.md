@@ -88,3 +88,4 @@
 - [x] Transcription not working
 
 - [x] Fix useAIReferee infinite loop error (Maximum update depth exceeded)
+- [x] Fix speech detection not working in debate room
