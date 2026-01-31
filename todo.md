@@ -89,3 +89,4 @@
 
 - [x] Fix useAIReferee infinite loop error (Maximum update depth exceeded)
 - [x] Fix speech detection not working in debate room
+- [x] Add audio level meter to show microphone input levels

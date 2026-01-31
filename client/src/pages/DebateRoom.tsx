@@ -59,6 +59,10 @@ export default function DebateRoom() {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   // AI Referee
   const referee = useAIReferee({ enabled: refereeEnabled });
@@ -248,6 +252,32 @@ export default function DebateRoom() {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      // Set up audio level monitoring with Web Audio API
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      microphone.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      
+      // Start monitoring audio levels
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateAudioLevel = () => {
+        if (analyserRef.current) {
+          analyserRef.current.getByteFrequencyData(dataArray);
+          // Calculate average level
+          const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          // Normalize to 0-100
+          const normalizedLevel = Math.min(100, Math.round((average / 128) * 100));
+          setAudioLevel(normalizedLevel);
+          animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+        }
+      };
+      updateAudioLevel();
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -342,6 +372,18 @@ export default function DebateRoom() {
   const stopRecording = () => {
     // Clear interim transcript
     setInterimTranscript('');
+    
+    // Stop audio level monitoring
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+    setAudioLevel(0);
     
     // Stop speech recognition
     if (recognitionRef.current) {
@@ -745,13 +787,40 @@ export default function DebateRoom() {
           {(isMyTurn || (testingMode && session?.status === "in_progress")) && (
             <div className="border-t-4 border-foreground p-6 shrink-0 bg-foreground text-background">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <p className="font-black uppercase">
                     {isMyTurn ? "Your Turn to Speak" : `Speaking as ${SPEAKER_NAMES[currentSpeaker]}`}
                   </p>
                   <p className="text-sm opacity-70">
                     {isRecording ? "Recording & transcribing..." : "Click to start speaking"}
                   </p>
+                  
+                  {/* Audio Level Meter */}
+                  {isRecording && (
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Mic className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase">Audio Level</span>
+                        <span className="text-xs opacity-70">{audioLevel}%</span>
+                      </div>
+                      <div className="w-full max-w-xs h-3 bg-background/20 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-75 rounded-full ${
+                            audioLevel > 70 ? 'bg-destructive' : 
+                            audioLevel > 30 ? 'bg-green-500' : 
+                            'bg-yellow-500'
+                          }`}
+                          style={{ width: `${audioLevel}%` }}
+                        />
+                      </div>
+                      <p className="text-xs opacity-50 mt-1">
+                        {audioLevel < 10 ? "No audio detected - check your microphone" :
+                         audioLevel < 30 ? "Low audio - speak louder or move closer" :
+                         audioLevel > 70 ? "Good audio level!" :
+                         "Audio detected"}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   {isRecording && (
