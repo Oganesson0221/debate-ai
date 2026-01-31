@@ -20,6 +20,7 @@ interface UseSocketOptions {
   onViolationFlagged?: (data: any) => void;
   onRoomState?: (data: any) => void;
   onAudioStream?: (data: any) => void;
+  onParticipantsUpdated?: (data: any) => void;
   onError?: (data: any) => void;
 }
 
@@ -107,6 +108,9 @@ export function useSocket(options: UseSocketOptions) {
     }
     if (options.onAudioStream) {
       socket.on("audio-stream", options.onAudioStream);
+    }
+    if (options.onParticipantsUpdated) {
+      socket.on("participants-updated", options.onParticipantsUpdated);
     }
     if (options.onError) {
       socket.on("error", options.onError);

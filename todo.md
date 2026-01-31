@@ -81,3 +81,8 @@
 - [ ] AI acts as automated referee/moderator
 - [ ] AI announces speakers and manages time automatically
 - [x] Solo testing mode - start debate without other participants
+
+## Critical Bugs (User Reported)
+- [x] Participants don't see each other in the room (sync issue)
+- [x] Audio not being detected when speaking
+- [x] Transcription not working

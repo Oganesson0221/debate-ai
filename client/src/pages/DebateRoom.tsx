@@ -57,6 +57,7 @@ export default function DebateRoom() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   // AI Referee
   const referee = useAIReferee({ enabled: refereeEnabled });
@@ -169,6 +170,10 @@ export default function DebateRoom() {
     onRoomState: (data) => {
       setCurrentSpeakerIndex(data.currentSpeakerIndex || 0);
     },
+    onParticipantsUpdated: () => {
+      // Refetch room data to get updated participant list
+      refetch();
+    },
   });
 
   // Timer functions
@@ -233,9 +238,10 @@ export default function DebateRoom() {
     }
   }, [timer, timeRemaining, refereeEnabled, roomData?.session?.status, lastAnnouncedTime, referee]);
 
-  // Recording functions
+  // Recording functions with real-time transcription
   const startRecording = async () => {
     try {
+      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -244,19 +250,98 @@ export default function DebateRoom() {
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          // Send audio data to other participants
+          event.data.arrayBuffer().then(buffer => {
+            socket.sendAudioData(buffer);
+          });
         }
       };
+
+      // Start Web Speech API for real-time transcription
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event: any) => {
+          let finalTranscript = '';
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          if (finalTranscript) {
+            // Add to local transcripts
+            const newTranscript = {
+              speaker: SPEAKER_NAMES[currentSpeaker] || 'Unknown',
+              text: finalTranscript,
+              timestamp: timer * 1000,
+            };
+            setAllTranscripts(prev => [...prev, newTranscript]);
+            
+            // Send to other participants
+            socket.sendTranscriptUpdate(0, finalTranscript, timer * 1000);
+          }
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            toast.error('Microphone access denied for speech recognition');
+          }
+        };
+        
+        recognition.onend = () => {
+          // Restart if still recording
+          if (isRecording && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              // Ignore if already started
+            }
+          }
+        };
+        
+        recognitionRef.current = recognition;
+        recognition.start();
+        toast.success('Speech recognition started');
+      } else {
+        toast.warning('Speech recognition not supported in this browser');
+      }
 
       mediaRecorder.start(1000);
       setIsRecording(true);
       socket.startSpeaking(0);
       startTimer();
+      
+      if (refereeEnabled) {
+        referee.announceSpeaker(currentSpeaker);
+      }
     } catch (error) {
-      toast.error("Failed to access microphone");
+      console.error('Recording error:', error);
+      toast.error("Failed to access microphone. Please check permissions.");
     }
   };
 
   const stopRecording = () => {
+    // Stop speech recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // Ignore
+      }
+      recognitionRef.current = null;
+    }
+    
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -290,6 +375,11 @@ export default function DebateRoom() {
     return () => {
       stopTimer();
       referee.stop();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }

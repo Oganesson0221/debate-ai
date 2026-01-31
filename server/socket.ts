@@ -87,11 +87,12 @@ export function initializeSocket(httpServer: HttpServer) {
         socket.join(roomCode);
         socketToRoom.set(socket.id, roomCode);
 
-        // Notify others
-        socket.to(roomCode).emit("participant-joined", {
-          participantId,
-          team: participant.team,
-          speakerRole: participant.speakerRole,
+        // Fetch fresh participant list from database
+        const dbParticipants = await db.getSessionParticipants(session.id);
+        
+        // Notify ALL room members (including the joiner) with updated participant list
+        io.to(roomCode).emit("participants-updated", {
+          participants: dbParticipants,
         });
 
         // Send current room state to joining participant
@@ -99,7 +100,7 @@ export function initializeSocket(httpServer: HttpServer) {
           sessionId: session.id,
           status: session.status,
           currentSpeakerIndex: session.currentSpeakerIndex,
-          participants: Array.from(room.participants.values()),
+          participants: dbParticipants,
           currentSpeaker: room.currentSpeaker,
           speechStartTime: room.speechStartTime,
           isPaused: room.isPaused,
