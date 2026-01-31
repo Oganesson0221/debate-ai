@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
-import { transcribeAudio } from "./_core/voiceTranscription";
+import { transcribeAudio, getTranscriptionStatus } from "./_core/voiceTranscription";
 import * as db from "./db";
 
 // Asian Parliamentary speaker order
@@ -580,11 +580,13 @@ export const appRouter = router({
       .input(z.object({
         audioUrl: z.string(),
         speechId: z.number(),
+        useHuggingFace: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         const result = await transcribeAudio({
           audioUrl: input.audioUrl,
           language: "en",
+          useHuggingFace: input.useHuggingFace,
         });
         
         if ('error' in result) {
@@ -884,6 +886,11 @@ Return JSON with clash relationships:
         lor: { name: "LO Reply", team: "opposition", duties: "Biased summary, no new arguments" },
       },
     })),
+  }),
+
+  // Transcription status
+  transcription: router({
+    status: publicProcedure.query(() => getTranscriptionStatus()),
   }),
 });
 

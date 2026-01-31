@@ -1,5 +1,6 @@
 /**
  * Voice transcription helper using internal Speech-to-Text service
+ * with Hugging Face fallback support
  *
  * Frontend implementation guide:
  * 1. Capture audio using MediaRecorder API
@@ -24,13 +25,24 @@
  *   prompt: 'Transcribe the meeting' // optional
  * });
  * ```
+ * 
+ * Configuration:
+ * - Primary: Uses BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY
+ * - Fallback: Uses HUGGINGFACE_API_KEY with Whisper models
+ * - Set USE_HUGGINGFACE=true to force Hugging Face usage
  */
 import { ENV } from "./env";
+import { 
+  transcribeWithHuggingFace, 
+  convertToWhisperFormat, 
+  isHuggingFaceAvailable 
+} from "./huggingfaceTranscription";
 
 export type TranscribeOptions = {
   audioUrl: string; // URL to the audio file (e.g., S3 URL)
   language?: string; // Optional: specify language code (e.g., "en", "es", "zh")
   prompt?: string; // Optional: custom prompt for the transcription
+  useHuggingFace?: boolean; // Optional: force use of Hugging Face
 };
 
 // Native Whisper API segment format
@@ -65,7 +77,163 @@ export type TranscriptionError = {
 };
 
 /**
- * Transcribe audio to text using the internal Speech-to-Text service
+ * Check if primary (Forge) transcription service is available
+ */
+function isForgeAvailable(): boolean {
+  return !!(ENV.forgeApiUrl && ENV.forgeApiKey);
+}
+
+/**
+ * Determine which transcription service to use
+ */
+function getTranscriptionProvider(forceHuggingFace?: boolean): 'forge' | 'huggingface' | null {
+  // Check if forced to use Hugging Face
+  if (forceHuggingFace || process.env.USE_HUGGINGFACE === 'true') {
+    if (isHuggingFaceAvailable()) {
+      return 'huggingface';
+    }
+    return null;
+  }
+  
+  // Try primary service first
+  if (isForgeAvailable()) {
+    return 'forge';
+  }
+  
+  // Fall back to Hugging Face
+  if (isHuggingFaceAvailable()) {
+    return 'huggingface';
+  }
+  
+  return null;
+}
+
+/**
+ * Transcribe audio using Hugging Face as the provider
+ */
+async function transcribeWithHF(
+  options: TranscribeOptions
+): Promise<TranscriptionResponse | TranscriptionError> {
+  const result = await transcribeWithHuggingFace({
+    audioUrl: options.audioUrl,
+    language: options.language,
+  });
+  
+  if ('error' in result) {
+    return {
+      error: result.error,
+      code: result.code === 'API_KEY_MISSING' ? 'SERVICE_ERROR' : result.code,
+      details: result.details,
+    };
+  }
+  
+  // Convert to Whisper format for compatibility
+  return convertToWhisperFormat(result);
+}
+
+/**
+ * Transcribe audio using Forge (primary) service
+ */
+async function transcribeWithForge(
+  options: TranscribeOptions
+): Promise<TranscriptionResponse | TranscriptionError> {
+  // Step 1: Download audio from URL
+  let audioBuffer: Buffer;
+  let mimeType: string;
+  try {
+    const response = await fetch(options.audioUrl);
+    if (!response.ok) {
+      return {
+        error: "Failed to download audio file",
+        code: "INVALID_FORMAT",
+        details: `HTTP ${response.status}: ${response.statusText}`
+      };
+    }
+    
+    audioBuffer = Buffer.from(await response.arrayBuffer());
+    mimeType = response.headers.get('content-type') || 'audio/mpeg';
+    
+    // Check file size (16MB limit)
+    const sizeMB = audioBuffer.length / (1024 * 1024);
+    if (sizeMB > 16) {
+      return {
+        error: "Audio file exceeds maximum size limit",
+        code: "FILE_TOO_LARGE",
+        details: `File size is ${sizeMB.toFixed(2)}MB, maximum allowed is 16MB`
+      };
+    }
+  } catch (error) {
+    return {
+      error: "Failed to fetch audio file",
+      code: "SERVICE_ERROR",
+      details: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+
+  // Step 2: Create FormData for multipart upload to Whisper API
+  const formData = new FormData();
+  
+  // Create a Blob from the buffer and append to form
+  const filename = `audio.${getFileExtension(mimeType)}`;
+  const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
+  formData.append("file", audioBlob, filename);
+  
+  formData.append("model", "whisper-1");
+  formData.append("response_format", "verbose_json");
+  
+  // Add prompt - use custom prompt if provided, otherwise generate based on language
+  const prompt = options.prompt || (
+    options.language 
+      ? `Transcribe the user's voice to text, the user's working language is ${getLanguageName(options.language)}`
+      : "Transcribe the user's voice to text"
+  );
+  formData.append("prompt", prompt);
+
+  // Step 3: Call the transcription service
+  const baseUrl = ENV.forgeApiUrl.endsWith("/")
+    ? ENV.forgeApiUrl
+    : `${ENV.forgeApiUrl}/`;
+  
+  const fullUrl = new URL(
+    "v1/audio/transcriptions",
+    baseUrl
+  ).toString();
+
+  const response = await fetch(fullUrl, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+      "Accept-Encoding": "identity",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    return {
+      error: "Transcription service request failed",
+      code: "TRANSCRIPTION_FAILED",
+      details: `${response.status} ${response.statusText}${errorText ? `: ${errorText}` : ""}`
+    };
+  }
+
+  // Step 4: Parse and return the transcription result
+  const whisperResponse = await response.json() as WhisperResponse;
+  
+  // Validate response structure
+  if (!whisperResponse.text || typeof whisperResponse.text !== 'string') {
+    return {
+      error: "Invalid transcription response",
+      code: "SERVICE_ERROR",
+      details: "Transcription service returned an invalid response format"
+    };
+  }
+
+  return whisperResponse;
+}
+
+/**
+ * Transcribe audio to text using the best available service
  * 
  * @param options - Audio data and metadata
  * @returns Transcription result or error
@@ -74,115 +242,32 @@ export async function transcribeAudio(
   options: TranscribeOptions
 ): Promise<TranscriptionResponse | TranscriptionError> {
   try {
-    // Step 1: Validate environment configuration
-    if (!ENV.forgeApiUrl) {
+    const provider = getTranscriptionProvider(options.useHuggingFace);
+    
+    if (!provider) {
       return {
-        error: "Voice transcription service is not configured",
+        error: "No transcription service is configured",
         code: "SERVICE_ERROR",
-        details: "BUILT_IN_FORGE_API_URL is not set"
+        details: "Set either BUILT_IN_FORGE_API_URL/BUILT_IN_FORGE_API_KEY or HUGGINGFACE_API_KEY"
       };
     }
-    if (!ENV.forgeApiKey) {
-      return {
-        error: "Voice transcription service authentication is missing",
-        code: "SERVICE_ERROR",
-        details: "BUILT_IN_FORGE_API_KEY is not set"
-      };
+    
+    console.log(`[Transcription] Using provider: ${provider}`);
+    
+    if (provider === 'huggingface') {
+      return await transcribeWithHF(options);
     }
-
-    // Step 2: Download audio from URL
-    let audioBuffer: Buffer;
-    let mimeType: string;
-    try {
-      const response = await fetch(options.audioUrl);
-      if (!response.ok) {
-        return {
-          error: "Failed to download audio file",
-          code: "INVALID_FORMAT",
-          details: `HTTP ${response.status}: ${response.statusText}`
-        };
-      }
-      
-      audioBuffer = Buffer.from(await response.arrayBuffer());
-      mimeType = response.headers.get('content-type') || 'audio/mpeg';
-      
-      // Check file size (16MB limit)
-      const sizeMB = audioBuffer.length / (1024 * 1024);
-      if (sizeMB > 16) {
-        return {
-          error: "Audio file exceeds maximum size limit",
-          code: "FILE_TOO_LARGE",
-          details: `File size is ${sizeMB.toFixed(2)}MB, maximum allowed is 16MB`
-        };
-      }
-    } catch (error) {
-      return {
-        error: "Failed to fetch audio file",
-        code: "SERVICE_ERROR",
-        details: error instanceof Error ? error.message : "Unknown error"
-      };
+    
+    // Try Forge first, fall back to HuggingFace on failure
+    const forgeResult = await transcribeWithForge(options);
+    
+    // If Forge failed and HuggingFace is available, try it as fallback
+    if ('error' in forgeResult && isHuggingFaceAvailable()) {
+      console.log(`[Transcription] Forge failed, falling back to HuggingFace: ${forgeResult.error}`);
+      return await transcribeWithHF(options);
     }
-
-    // Step 3: Create FormData for multipart upload to Whisper API
-    const formData = new FormData();
     
-    // Create a Blob from the buffer and append to form
-    const filename = `audio.${getFileExtension(mimeType)}`;
-    const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
-    formData.append("file", audioBlob, filename);
-    
-    formData.append("model", "whisper-1");
-    formData.append("response_format", "verbose_json");
-    
-    // Add prompt - use custom prompt if provided, otherwise generate based on language
-    const prompt = options.prompt || (
-      options.language 
-        ? `Transcribe the user's voice to text, the user's working language is ${getLanguageName(options.language)}`
-        : "Transcribe the user's voice to text"
-    );
-    formData.append("prompt", prompt);
-
-    // Step 4: Call the transcription service
-    const baseUrl = ENV.forgeApiUrl.endsWith("/")
-      ? ENV.forgeApiUrl
-      : `${ENV.forgeApiUrl}/`;
-    
-    const fullUrl = new URL(
-      "v1/audio/transcriptions",
-      baseUrl
-    ).toString();
-
-    const response = await fetch(fullUrl, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-        "Accept-Encoding": "identity",
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      return {
-        error: "Transcription service request failed",
-        code: "TRANSCRIPTION_FAILED",
-        details: `${response.status} ${response.statusText}${errorText ? `: ${errorText}` : ""}`
-      };
-    }
-
-    // Step 5: Parse and return the transcription result
-    const whisperResponse = await response.json() as WhisperResponse;
-    
-    // Validate response structure
-    if (!whisperResponse.text || typeof whisperResponse.text !== 'string') {
-      return {
-        error: "Invalid transcription response",
-        code: "SERVICE_ERROR",
-        details: "Transcription service returned an invalid response format"
-      };
-    }
-
-    return whisperResponse; // Return native Whisper API response directly
+    return forgeResult;
 
   } catch (error) {
     // Handle unexpected errors
@@ -242,11 +327,26 @@ function getLanguageName(langCode: string): string {
 }
 
 /**
+ * Get information about available transcription providers
+ */
+export function getTranscriptionStatus(): {
+  forgeAvailable: boolean;
+  huggingFaceAvailable: boolean;
+  activeProvider: 'forge' | 'huggingface' | null;
+} {
+  return {
+    forgeAvailable: isForgeAvailable(),
+    huggingFaceAvailable: isHuggingFaceAvailable(),
+    activeProvider: getTranscriptionProvider(),
+  };
+}
+
+/**
  * Example tRPC procedure implementation:
  * 
  * ```ts
  * // In server/routers.ts
- * import { transcribeAudio } from "./_core/voiceTranscription";
+ * import { transcribeAudio, getTranscriptionStatus } from "./_core/voiceTranscription";
  * 
  * export const voiceRouter = router({
  *   transcribe: protectedProcedure
@@ -254,6 +354,7 @@ function getLanguageName(langCode: string): string {
  *       audioUrl: z.string(),
  *       language: z.string().optional(),
  *       prompt: z.string().optional(),
+ *       useHuggingFace: z.boolean().optional(),
  *     }))
  *     .mutation(async ({ input, ctx }) => {
  *       const result = await transcribeAudio(input);
@@ -279,6 +380,8 @@ function getLanguageName(langCode: string): string {
  *       
  *       return result;
  *     }),
+ *   
+ *   status: publicProcedure.query(() => getTranscriptionStatus()),
  * });
  * ```
  */
