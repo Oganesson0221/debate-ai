@@ -965,21 +965,21 @@ export default function DebateRoom() {
             </div>
           </div>
 
-          {/* Session Actions */}
-          {session?.status === "completed" && (
-            <div className="p-4 border-t-4 border-foreground space-y-2">
+          {/* Session Actions - Always show mindmap link */}
+          <div className="p-4 border-t-4 border-foreground space-y-2">
+            <Link href={`/room/${roomCode}/mindmap`}>
+              <Button variant="outline" className="brutalist-border bg-transparent w-full uppercase font-black">
+                View Mindmap
+              </Button>
+            </Link>
+            {session?.status === "completed" && (
               <Link href={`/room/${roomCode}/feedback`}>
                 <Button className="brutalist-border w-full uppercase font-black">
                   View Feedback
                 </Button>
               </Link>
-              <Link href={`/room/${roomCode}/mindmap`}>
-                <Button variant="outline" className="brutalist-border bg-transparent w-full uppercase font-black">
-                  View Mindmap
-                </Button>
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
     </div>

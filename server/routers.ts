@@ -634,6 +634,48 @@ export const appRouter = router({
         return { arguments: args, relationships };
       }),
     
+    // Manual argument extraction from all speeches in a session
+    extractFromSession: protectedProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .mutation(async ({ input }) => {
+        const speeches = await db.getSessionSpeeches(input.sessionId);
+        const participants = await db.getSessionParticipants(input.sessionId);
+        
+        let extractedCount = 0;
+        
+        for (const speech of speeches) {
+          if (!speech.transcript) continue;
+          
+          const participant = participants.find(p => p.id === speech.participantId);
+          if (!participant) continue;
+          
+          const extracted = await extractArgumentsFromTranscript(
+            speech.transcript,
+            participant.team,
+            speech.speakerRole
+          );
+          
+          for (const arg of extracted.arguments) {
+            await db.createArgument({
+              sessionId: input.sessionId,
+              speechId: speech.id,
+              team: participant.team,
+              type: arg.type,
+              claim: arg.claim,
+              mechanism: arg.mechanism,
+              impact: arg.impact,
+              transcriptExcerpt: arg.transcriptExcerpt,
+              qualityScore: arg.qualityScore,
+              strengthExplanation: arg.strengthExplanation,
+              weaknessExplanation: arg.weaknessExplanation,
+            });
+            extractedCount++;
+          }
+        }
+        
+        return { success: true, extractedCount };
+      }),
+    
     createRelationship: protectedProcedure
       .input(z.object({
         sessionId: z.number(),
