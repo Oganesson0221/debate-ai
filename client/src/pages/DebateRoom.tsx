@@ -299,7 +299,12 @@ export default function DebateRoom() {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
+        // Force English language - this must be set before start()
         recognition.lang = 'en-US';
+        // Set maxAlternatives to get better results
+        recognition.maxAlternatives = 1;
+        
+        console.log('[Speech] Initializing speech recognition with lang:', recognition.lang);
         
         recognition.onresult = (event: any) => {
           let finalText = '';
@@ -336,9 +341,26 @@ export default function DebateRoom() {
         };
         
         recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
-          if (event.error === 'not-allowed') {
-            toast.error('Microphone access denied for speech recognition');
+          console.error('[Speech] Recognition error:', event.error, event);
+          switch (event.error) {
+            case 'not-allowed':
+              toast.error('Microphone access denied for speech recognition');
+              break;
+            case 'no-speech':
+              // This is normal when there's silence, don't show error
+              console.log('[Speech] No speech detected');
+              break;
+            case 'network':
+              toast.error('Network error - speech recognition requires internet');
+              break;
+            case 'aborted':
+              console.log('[Speech] Recognition aborted');
+              break;
+            case 'language-not-supported':
+              toast.error('English language not supported on this device');
+              break;
+            default:
+              toast.error(`Speech recognition error: ${event.error}`);
           }
         };
         
@@ -354,8 +376,18 @@ export default function DebateRoom() {
         };
         
         recognitionRef.current = recognition;
-        recognition.start();
-        toast.success('Speech recognition started');
+        
+        recognition.onstart = () => {
+          console.log('[Speech] Recognition started with language:', recognition.lang);
+        };
+        
+        try {
+          recognition.start();
+          toast.success('Speech recognition started (English)');
+        } catch (e) {
+          console.error('[Speech] Failed to start recognition:', e);
+          toast.error('Failed to start speech recognition');
+        }
       } else {
         toast.warning('Speech recognition not supported in this browser');
       }
