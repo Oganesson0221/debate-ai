@@ -1,8 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
-import { ArrowRight, Mic, Brain, Users, Clock, BarChart3, Zap } from "lucide-react";
+import { ArrowRight, Mic, Brain, Users, Clock, BarChart3, Zap, Award, Target, Lightbulb } from "lucide-react";
 import { Link } from "wouter";
+import { MINDSPEAK_CONTEXT, DEBATE_COACHING_TIPS } from "@/data/mindspeakContext";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
@@ -51,7 +52,7 @@ export default function Home() {
             <div className="space-y-8">
               <div className="space-y-4">
                 <p className="text-lg md:text-xl font-bold uppercase tracking-widest text-muted-foreground">
-                  AI-Powered Training
+                  AI-Powered Training • Powered by MindSpeak Logic
                 </p>
                 <h1 className="text-massive leading-none">
                   DEBATE<br />
@@ -59,7 +60,7 @@ export default function Home() {
                 </h1>
               </div>
               <p className="text-xl md:text-2xl font-medium max-w-lg leading-relaxed">
-                Real-time transcription. Argument analysis. 
+                Real-time English transcription. Argument analysis. 
                 AI coaching. Scale your debate practice without limits.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -121,6 +122,95 @@ export default function Home() {
         </div>
       </section>
 
+      {/* MindSpeak Logic Partnership Section */}
+      <section className="py-20 bg-gradient-to-b from-background to-muted/20 border-y-4 border-foreground">
+        <div className="container">
+          <div className="mb-16 text-center">
+            <p className="text-lg font-bold uppercase tracking-widest text-muted-foreground mb-4">
+              Powered By
+            </p>
+            <h2 className="text-display">
+              {MINDSPEAK_CONTEXT.name.toUpperCase()}
+            </h2>
+            <p className="text-2xl font-medium mt-4 text-muted-foreground italic">
+              "{MINDSPEAK_CONTEXT.tagline}"
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {MINDSPEAK_CONTEXT.services.map((service, index) => (
+              <div key={index} className="brutalist-border brutalist-shadow p-8 hover:brutalist-shadow-lg transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  {index === 0 && <Target className="h-8 w-8" />}
+                  {index === 1 && <Mic className="h-8 w-8" />}
+                  {index === 2 && <Lightbulb className="h-8 w-8" />}
+                  <h3 className="text-2xl font-black uppercase">{service.name}</h3>
+                </div>
+                <p className="text-lg font-bold text-muted-foreground mb-2">{service.title}</p>
+                <p className="text-muted-foreground">{service.description}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Track Record Stats */}
+          <div className="brutalist-border-thick brutalist-shadow-lg p-8 md:p-12 bg-foreground text-background">
+            <h3 className="text-3xl font-black uppercase mb-8 text-center">
+              {MINDSPEAK_CONTEXT.anniversary}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.bestSpeakers}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Best Speakers</p>
+              </div>
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.rankedSpeakers}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Ranked Speakers</p>
+              </div>
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.rankedSchools}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Ranked Schools</p>
+              </div>
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.finalists}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Finalists</p>
+              </div>
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.semiFinalists}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Semi-Finalists</p>
+              </div>
+              <div>
+                <p className="text-4xl md:text-5xl font-black">{MINDSPEAK_CONTEXT.trackRecord.quarterFinalists}</p>
+                <p className="font-bold uppercase text-sm mt-2 opacity-80">Quarter-Finalists</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Debate Tips Section */}
+      <section className="py-20">
+        <div className="container">
+          <div className="mb-16">
+            <p className="text-lg font-bold uppercase tracking-widest text-muted-foreground mb-4">
+              Expert Coaching Tips
+            </p>
+            <h2 className="text-display">
+              DEBATE LIKE A PRO
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {DEBATE_COACHING_TIPS.map((tip, index) => (
+              <div key={index} className="brutalist-border p-6 hover:brutalist-shadow transition-all">
+                <div className="flex items-start gap-4">
+                  <span className="text-4xl font-black text-muted-foreground/30">{String(index + 1).padStart(2, '0')}</span>
+                  <p className="text-lg">{tip}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section className="py-20 bg-foreground text-background">
         <div className="container">
@@ -136,8 +226,8 @@ export default function Home() {
             {[
               {
                 icon: Mic,
-                title: "Live Transcription",
-                description: "Real-time speech-to-text with speaker identification and timestamp segmentation."
+                title: "Live English Transcription",
+                description: "Real-time speech-to-text in English with speaker identification and timestamp segmentation."
               },
               {
                 icon: Brain,
@@ -197,7 +287,7 @@ export default function Home() {
             {[
               { step: "01", title: "Create Room", desc: "Generate a debate room with AI motion" },
               { step: "02", title: "Join Teams", desc: "6 debaters join as Gov or Opposition" },
-              { step: "03", title: "Debate Live", desc: "Speak while AI transcribes in real-time" },
+              { step: "03", title: "Debate Live", desc: "Speak in English while AI transcribes in real-time" },
               { step: "04", title: "Get Feedback", desc: "Review argument map and AI analysis" }
             ].map((item, index) => (
               <div key={index} className="relative">
@@ -254,6 +344,7 @@ export default function Home() {
             </h2>
             <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-12 text-muted-foreground">
               Join debaters worldwide using AI to sharpen their argumentation skills.
+              Powered by 10 years of MindSpeak Logic expertise.
             </p>
             {isAuthenticated ? (
               <Link href="/room/create">
@@ -283,10 +374,18 @@ export default function Home() {
                 [DEBATE.AI]
               </span>
               <span className="text-muted-foreground">
-                — AI-Powered Debate Training
+                — Powered by MindSpeak Logic
               </span>
             </div>
             <div className="flex items-center gap-8">
+              <a 
+                href="https://www.mindspeaklogic.org/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="font-bold uppercase tracking-wider text-sm hover:underline decoration-2 underline-offset-4"
+              >
+                MindSpeak Logic
+              </a>
               <Link href="/about" className="font-bold uppercase tracking-wider text-sm hover:underline decoration-2 underline-offset-4 no-underline hover:bg-transparent">
                 About
               </Link>
