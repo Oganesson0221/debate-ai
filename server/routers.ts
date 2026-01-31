@@ -396,7 +396,10 @@ export const appRouter = router({
       }),
     
     start: protectedProcedure
-      .input(z.object({ sessionId: z.number() }))
+      .input(z.object({ 
+        sessionId: z.number(),
+        testingMode: z.boolean().optional().default(false),
+      }))
       .mutation(async ({ input, ctx }) => {
         const session = await db.getDebateSessionById(input.sessionId);
         if (!session) throw new Error("Session not found");
@@ -404,7 +407,11 @@ export const appRouter = router({
         if (session.status !== "waiting") throw new Error("Debate cannot be started");
         
         const participants = await db.getSessionParticipants(input.sessionId);
-        if (participants.length < 6) throw new Error("Need 6 participants to start (3 per team)");
+        
+        // In testing mode, allow starting with any number of participants
+        if (!input.testingMode && participants.length < 6) {
+          throw new Error("Need 6 participants to start (3 per team). Enable testing mode to start with fewer.");
+        }
         
         await db.updateDebateSession(input.sessionId, {
           status: "in_progress",
@@ -413,7 +420,7 @@ export const appRouter = router({
           currentSpeakerStartTime: new Date(),
         });
         
-        return { success: true };
+        return { success: true, testingMode: input.testingMode };
       }),
     
     end: protectedProcedure

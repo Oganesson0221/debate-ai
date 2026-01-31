@@ -1,13 +1,14 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { useSocket } from "@/hooks/useSocket";
+import { useAIReferee } from "@/hooks/useAIReferee";
 import { 
   ArrowLeft, Mic, MicOff, Play, Pause, Square, 
-  Users, Clock, AlertTriangle, Hand, ChevronRight,
-  Loader2, Copy, Check
+  Users, AlertTriangle, Hand, ChevronRight,
+  Loader2, Copy, Check, Volume2, VolumeX, Bot
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useParams } from "wouter";
@@ -43,17 +44,22 @@ export default function DebateRoom() {
   const { user, isAuthenticated } = useAuth();
   
   const [isRecording, setIsRecording] = useState(false);
-  const [currentTranscript, setCurrentTranscript] = useState("");
   const [allTranscripts, setAllTranscripts] = useState<Array<{ speaker: string; text: string; timestamp: number }>>([]);
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [currentSpeakerIndex, setCurrentSpeakerIndex] = useState(0);
   const [poiOffered, setPoiOffered] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [testingMode, setTestingMode] = useState(true); // Default to testing mode
+  const [refereeEnabled, setRefereeEnabled] = useState(true);
+  const [lastAnnouncedTime, setLastAnnouncedTime] = useState<number | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // AI Referee
+  const referee = useAIReferee({ enabled: refereeEnabled });
 
   // Fetch room data
   const { data: roomData, isLoading, refetch } = trpc.debate.getByRoomCode.useQuery(
@@ -62,8 +68,11 @@ export default function DebateRoom() {
   );
 
   const startDebate = trpc.debate.start.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Debate started!");
+      if (refereeEnabled && roomData?.motion?.title) {
+        referee.announceDebateStart(roomData.motion.title);
+      }
       refetch();
     },
     onError: (error) => toast.error(error.message),
@@ -73,9 +82,18 @@ export default function DebateRoom() {
     onSuccess: (data) => {
       if (data.finished) {
         toast.success("Debate completed!");
+        if (refereeEnabled) {
+          referee.announceDebateEnd();
+        }
       } else {
-        toast.success(`Next speaker: ${SPEAKER_NAMES[data.nextSpeaker || '']}`);
+        const nextRole = data.nextSpeaker || '';
+        toast.success(`Next speaker: ${SPEAKER_NAMES[nextRole]}`);
+        if (refereeEnabled) {
+          referee.announceSpeaker(nextRole);
+        }
       }
+      setTimer(0);
+      setLastAnnouncedTime(null);
       refetch();
     },
     onError: (error) => toast.error(error.message),
@@ -84,6 +102,9 @@ export default function DebateRoom() {
   const endDebate = trpc.debate.end.useMutation({
     onSuccess: () => {
       toast.success("Debate ended. Generating feedback...");
+      if (refereeEnabled) {
+        referee.announceDebateEnd();
+      }
       refetch();
     },
     onError: (error) => toast.error(error.message),
@@ -112,7 +133,7 @@ export default function DebateRoom() {
       setTimer(0);
       startTimer();
     },
-    onSpeakerStopped: (data) => {
+    onSpeakerStopped: () => {
       stopTimer();
     },
     onTranscriptSegment: (data) => {
@@ -141,6 +162,9 @@ export default function DebateRoom() {
     },
     onViolationFlagged: (data) => {
       toast.warning(`Rule violation: ${data.description}`);
+      if (refereeEnabled) {
+        referee.announceRuleViolation(data.description);
+      }
     },
     onRoomState: (data) => {
       setCurrentSpeakerIndex(data.currentSpeakerIndex || 0);
@@ -173,6 +197,42 @@ export default function DebateRoom() {
     setIsPaused(!isPaused);
   };
 
+  // Time announcements
+  const currentSpeaker = AP_SPEAKER_ORDER[currentSpeakerIndex];
+  const maxTime = AP_SPEECH_TIMES[currentSpeaker] || 420;
+  const timeRemaining = maxTime - timer;
+  const isProtected = timer < PROTECTED_TIME || timeRemaining < PROTECTED_TIME;
+  const isOvertime = timer > maxTime;
+
+  // Announce time warnings
+  useEffect(() => {
+    if (!refereeEnabled || roomData?.session?.status !== "in_progress") return;
+    
+    // Announce protected time transitions
+    if (timer === PROTECTED_TIME && lastAnnouncedTime !== PROTECTED_TIME) {
+      referee.announceProtectedTime(true);
+      setLastAnnouncedTime(PROTECTED_TIME);
+    }
+    
+    // Time warnings
+    if (timeRemaining === 60 && lastAnnouncedTime !== 60) {
+      referee.announceTimeWarning(60);
+      setLastAnnouncedTime(60);
+    } else if (timeRemaining === 30 && lastAnnouncedTime !== 30) {
+      referee.announceTimeWarning(30);
+      setLastAnnouncedTime(30);
+    } else if (timeRemaining === 10 && lastAnnouncedTime !== 10) {
+      referee.announceTimeWarning(10);
+      setLastAnnouncedTime(10);
+    }
+    
+    // Protected time at end
+    if (timeRemaining === PROTECTED_TIME && lastAnnouncedTime !== -PROTECTED_TIME) {
+      referee.announceProtectedTime(false);
+      setLastAnnouncedTime(-PROTECTED_TIME);
+    }
+  }, [timer, timeRemaining, refereeEnabled, roomData?.session?.status, lastAnnouncedTime, referee]);
+
   // Recording functions
   const startRecording = async () => {
     try {
@@ -187,9 +247,9 @@ export default function DebateRoom() {
         }
       };
 
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(1000);
       setIsRecording(true);
-      socket.startSpeaking(0); // TODO: Pass actual speech ID
+      socket.startSpeaking(0);
       startTimer();
     } catch (error) {
       toast.error("Failed to access microphone");
@@ -203,6 +263,9 @@ export default function DebateRoom() {
       setIsRecording(false);
       socket.stopSpeaking(0);
       stopTimer();
+      if (refereeEnabled) {
+        referee.announceSpeechEnd(currentSpeaker);
+      }
     }
   };
 
@@ -212,13 +275,6 @@ export default function DebateRoom() {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Get timer status
-  const currentSpeaker = AP_SPEAKER_ORDER[currentSpeakerIndex];
-  const maxTime = AP_SPEECH_TIMES[currentSpeaker] || 420;
-  const timeRemaining = maxTime - timer;
-  const isProtected = timer < PROTECTED_TIME || timeRemaining < PROTECTED_TIME;
-  const isOvertime = timer > maxTime;
 
   const copyRoomCode = () => {
     if (roomCode) {
@@ -233,11 +289,12 @@ export default function DebateRoom() {
   useEffect(() => {
     return () => {
       stopTimer();
+      referee.stop();
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stopTimer]);
+  }, [stopTimer, referee]);
 
   if (!isAuthenticated) {
     return (
@@ -285,7 +342,8 @@ export default function DebateRoom() {
   const govTeam = participants.filter(p => p.team === "government");
   const oppTeam = participants.filter(p => p.team === "opposition");
   const isCreator = session?.createdBy === user?.id;
-  const canStart = isCreator && session?.status === "waiting" && participants.length >= 2;
+  // In testing mode, allow starting with any participants; otherwise need 6
+  const canStart = isCreator && session?.status === "waiting" && (testingMode || participants.length >= 6);
   const isMyTurn = currentParticipant?.speakerRole === currentSpeaker && session?.status === "in_progress";
 
   return (
@@ -302,6 +360,18 @@ export default function DebateRoom() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            {/* AI Referee Toggle */}
+            <div className="flex items-center gap-2 brutalist-border px-3 py-2">
+              <Bot className="h-4 w-4" />
+              <span className="text-xs font-black uppercase">AI Referee</span>
+              <button
+                onClick={() => setRefereeEnabled(!refereeEnabled)}
+                className={`p-1 ${refereeEnabled ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                {refereeEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+            </div>
+            
             <button
               onClick={copyRoomCode}
               className="flex items-center gap-2 brutalist-border px-4 py-2 font-black uppercase tracking-wider text-sm hover:bg-foreground hover:text-background transition-colors"
@@ -325,6 +395,17 @@ export default function DebateRoom() {
           </div>
         </div>
       </header>
+
+      {/* AI Referee Speaking Indicator */}
+      {referee.isSpeaking && (
+        <div className="bg-foreground text-background px-4 py-2 text-center animate-pulse">
+          <div className="flex items-center justify-center gap-2">
+            <Bot className="h-5 w-5" />
+            <span className="font-black uppercase text-sm">AI Referee Speaking</span>
+            <span className="text-sm opacity-80">"{referee.currentAnnouncement}"</span>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 flex overflow-hidden">
         {/* Left Panel - Teams */}
@@ -423,21 +504,40 @@ export default function DebateRoom() {
               </div>
 
               <div className="flex gap-2">
-                {session?.status === "waiting" && canStart && (
-                  <Button
-                    onClick={() => startDebate.mutate({ sessionId: session.id })}
-                    disabled={startDebate.isPending}
-                    className="brutalist-border brutalist-shadow-hover uppercase font-black"
-                  >
-                    {startDebate.isPending ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Play className="h-5 w-5 mr-2" />
-                        Start
-                      </>
+                {session?.status === "waiting" && isCreator && (
+                  <div className="flex flex-col gap-2">
+                    {/* Testing Mode Toggle */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Switch
+                        checked={testingMode}
+                        onCheckedChange={setTestingMode}
+                        id="testing-mode"
+                      />
+                      <label htmlFor="testing-mode" className="font-bold uppercase text-xs cursor-pointer">
+                        Testing Mode
+                      </label>
+                    </div>
+                    
+                    <Button
+                      onClick={() => startDebate.mutate({ sessionId: session.id, testingMode })}
+                      disabled={startDebate.isPending || !canStart}
+                      className="brutalist-border brutalist-shadow-hover uppercase font-black"
+                    >
+                      {startDebate.isPending ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Play className="h-5 w-5 mr-2" />
+                          Start {testingMode ? "(Test)" : ""}
+                        </>
+                      )}
+                    </Button>
+                    {!testingMode && participants.length < 6 && (
+                      <p className="text-xs text-muted-foreground">
+                        Need {6 - participants.length} more participants
+                      </p>
                     )}
-                  </Button>
+                  </div>
                 )}
                 
                 {session?.status === "in_progress" && (
@@ -626,6 +726,22 @@ export default function DebateRoom() {
               </div>
             </div>
           </div>
+
+          {/* Session Actions */}
+          {session?.status === "completed" && (
+            <div className="p-4 border-t-4 border-foreground space-y-2">
+              <Link href={`/room/${roomCode}/feedback`}>
+                <Button className="brutalist-border w-full uppercase font-black">
+                  View Feedback
+                </Button>
+              </Link>
+              <Link href={`/room/${roomCode}/mindmap`}>
+                <Button variant="outline" className="brutalist-border bg-transparent w-full uppercase font-black">
+                  View Mindmap
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -64,3 +64,9 @@
 
 ## Testing
 - [x] Unit tests for core functionality
+
+## Testing Mode & AI Referee
+- [x] Allow starting debate with any number of participants (testing mode)
+- [x] AI referee with text-to-speech announcements
+- [x] Speaker introductions and time announcements
+- [x] Prepare for deployment
