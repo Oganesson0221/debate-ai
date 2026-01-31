@@ -1,0 +1,115 @@
+{
+  "testimonials": [
+    {
+      "name": "Ryan Chia",
+      "current_school": "Raffles Institution",
+      "former_school": "Maha Bodhi School",
+      "achievements": ["2 times Ranked Speaker", "3 times Best Speaker"],
+      "coach": "Coach Firoze"
+    },
+    {
+      "name": "Rachel Wong",
+      "current_school": "NUS High",
+      "former_school": "Raffles Girls Pri Sch",
+      "achievements": ["Best Debating School Div. l", "2 times Ranked Speaker", "4 times Best Speaker"],
+      "coach": "Coach Firoze"
+    },
+    {
+      "name": "C. Ashwinshiva",
+      "current_school": "Victoria School",
+      "former_school": "Rivervale Pri Sch",
+      "achievements": ["Best Speaker"],
+      "coach": "Coach Firoze"
+    },
+    {
+      "name": "Shwetha Murthy",
+      "current_school": "Raffles Girls School",
+      "former_school": "Innova Pri Sch",
+      "achievements": ["3 times Ranked Speaker", "4 times Best Speaker"],
+      "coach": "Coach Firoze"
+    },
+    {
+      "name": "Charlene Ong",
+      "current_school": "Raffles Girls School",
+      "former_school": "Rivervale Pri Sch",
+      "achievements": [],
+      "coach": "Coach Firoze"
+    },
+    {
+      "name": "Judith",
+      "current_school": "West Spring Sec.",
+      "former_school": null,
+      "achievements": [],
+      "coach": "Mr Tim",
+      "program": "Drama/Theatre"
+    },
+    {
+      "name": "Dominic",
+      "current_school": "Springfield Sec.",
+      "former_school": null,
+      "achievements": [],
+      "coach": "Mr Tim",
+      "program": "Drama/Theatre"
+    },
+    {
+      "name": "Ethan",
+      "current_school": "Woodlands Ring Sec.",
+      "former_school": null,
+      "achievements": [],
+      "coach": "Mr Tim",
+      "program": "Drama/Theatre"
+    },
+    {
+      "name": "Chiang Yin Kit",
+      "current_school": "Hwa Chong Institution",
+      "former_school": "Maha Bodhi School",
+      "achievements": ["Champion, PSDO Div 1"],
+      "coach": "Multiple coaches"
+    },
+    {
+      "name": "Chia Kishen",
+      "current_school": "Hwa Chong Institution",
+      "former_school": "Maha Bodhi School",
+      "achievements": ["Champion, PSDO Div 1"],
+      "coach": "Multiple coaches"
+    },
+    {
+      "name": "Natasha Nadira Imran",
+      "current_school": null,
+      "former_school": "Temasek Pri Sch",
+      "achievements": ["First Runners Up, PSDO Div 1", "Best Speaker"],
+      "coach": "Coach Firoze, Mr Anand"
+    },
+    {
+      "name": "Shernice Ng",
+      "current_school": null,
+      "former_school": "Temasek Pri Sch",
+      "achievements": ["First Runners Up, PSDO Div 1"],
+      "coach": "Mr Anand"
+    }
+  ],
+  "coaches_mentioned": [
+    "Coach Firoze",
+    "Mr Tim",
+    "Mr Anand"
+  ],
+  "schools_mentioned": [
+    "Raffles Institution",
+    "Raffles Girls School",
+    "Raffles Girls Pri Sch",
+    "NUS High",
+    "Hwa Chong Institution",
+    "Victoria School",
+    "Maha Bodhi School",
+    "Rivervale Pri Sch",
+    "Innova Pri Sch",
+    "Temasek Pri Sch",
+    "West Spring Sec.",
+    "Springfield Sec.",
+    "Woodlands Ring Sec."
+  ],
+  "competitions_mentioned": [
+    "PSDO (Primary School Debate Open)",
+    "PSDO Div 1"
+  ]
+}

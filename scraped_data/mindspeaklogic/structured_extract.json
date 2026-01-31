@@ -1,0 +1,48 @@
+{
+  "creditsUsed": 47,
+  "data": {
+    "contact": {
+      "address": "7 Temasek Boulevard, Suntec Tower One, Singapore 038987",
+      "email": "coachfiroze@gmail.com",
+      "phone": null
+    },
+    "mission": "Our mission is to empower young minds with the essential skills for success in the classroom and in life: Critical Thinking, Logical Reasoning, and Oratorical Excellence.",
+    "organization_name": "MindSpeak Logic",
+    "services": [],
+    "tagline": "Engaging Minds, Impacting Lives",
+    "testimonials": [
+      {
+        "feedback": "Coach Firoze has been a wonderful coach for me during my time as a primary school debater, as he had always encouraged me to continue debating and becoming stronger at the art of listening and arguing.",
+        "name": "Ryan Chia",
+        "role": "Debater, Raffles Institution"
+      },
+      {
+        "feedback": "Throughout the 2 years of training, I learnt a lot about both debate itself and public speaking. Coach Firoze guided us not only in terms of how to analyse and write debate points, but gave feedback on how to improve our speaking style.",
+        "name": "Rachel Wong",
+        "role": "NUS High"
+      },
+      {
+        "feedback": "Coach Firoze takes pride in teaching his students. I had pleasure learning from him. He never hesitates to clear our doubts.",
+        "name": "C. Ashwinshiva",
+        "role": "Victoria School"
+      },
+      {
+        "feedback": "My experience under Coach Firoze had been nothing short of wonderful. Through his engaging methods and good-naturedness, Coach has successfully managed to kindle his pupil's interests in debate.",
+        "name": "Shwetha Murthy",
+        "role": "Debater, Raffles Girls School"
+      }
+    ],
+    "track_record": {
+      "best_speakers": 344,
+      "finalists": 22,
+      "quarter_finalists": 44,
+      "ranked_schools": 72,
+      "ranked_speakers": 109,
+      "semi_finalists": 30
+    }
+  },
+  "expiresAt": "2026-01-31T11:11:55.000Z",
+  "status": "completed",
+  "success": true,
+  "tokensUsed": 696
+}

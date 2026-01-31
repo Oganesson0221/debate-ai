@@ -1,0 +1,89 @@
+{
+  "organization": {
+    "name": "MindSpeak Logic",
+    "tagline": "Engaging Minds, Impacting Lives",
+    "founded": "2015",
+    "anniversary": "10 Years (as of 2025)",
+    "location": {
+      "address": "7 Temasek Boulevard",
+      "building": "Suntec Tower One",
+      "city": "Singapore",
+      "postal_code": "038987",
+      "country": "Singapore"
+    },
+    "contact": {
+      "email": "coachfiroze@gmail.com"
+    },
+    "social_media": {
+      "facebook": "http://www.facebook.com/mindspeaklogic",
+      "instagram": "https://www.instagram.com/mindspeak_logic/",
+      "linkedin": "https://www.linkedin.com/company/109365067/"
+    },
+    "website": "https://www.mindspeaklogic.org"
+  },
+  "mission": {
+    "statement": "To empower young minds with the essential skills for success in the classroom and in life: Critical Thinking, Logical Reasoning, and Oratorical Excellence.",
+    "approach": "Teaching students how to think, not what to think, turning complex ideas into clear, persuasive arguments."
+  },
+  "services": [
+    {
+      "name": "DEBATE",
+      "subtitle": "Winning Arguments",
+      "description": "Highly engaging debating class improving logical reasoning and critical thinking skills, helping students become more confident in delivering compelling arguments."
+    },
+    {
+      "name": "ORATORY",
+      "subtitle": "ACE Communicator",
+      "description": "Original programme crafted by seasoned coaches in Public Speaking and Toastmasters. Students become orators that are Articulate, Confident and Engaging.",
+      "acronym_meaning": {
+        "A": "Articulate",
+        "C": "Confident",
+        "E": "Engaging"
+      }
+    },
+    {
+      "name": "DRAMA",
+      "subtitle": "Art of Expression",
+      "description": "Opportunities to explore and express emotions in a safe and nurturing environment. Students discover their best forms through the Art of Expression."
+    }
+  ],
+  "core_focus_areas": [
+    {
+      "area": "Debate & Public Speaking",
+      "description": "Training students to structure compelling arguments, master spontaneous speaking, and deliver with charisma."
+    },
+    {
+      "area": "Logical Reasoning",
+      "description": "Equipping students with the tools of formal and informal logic to analyse information, detect flaws, and make sound judgments."
+    },
+    {
+      "area": "The Art of Expression",
+      "description": "Utilizing dynamic and engaging teaching methodologies, including drama, to help students explore and express their emotions in a safe, nurturing environment."
+    }
+  ],
+  "track_record": {
+    "as_of_year": 2024,
+    "statistics": {
+      "ranked_speakers": 109,
+      "best_speakers": 344,
+      "semi_finalists": 30,
+      "quarter_finalists": 44,
+      "ranked_schools": 72,
+      "finalists": 22
+    }
+  },
+  "team": {
+    "description": "A collective of highly competent and skilled trainers who share a singular passion: transforming communication.",
+    "qualifications": [
+      "Extensive teaching qualifications",
+      "Specialized expertise in competitive debate",
+      "Expertise in applied logic",
+      "Dynamic and proven pedagogical methods"
+    ],
+    "known_coaches": [
+      "Coach Firoze",
+      "Mr Tim",
+      "Mr Anand"
+    ]
+  }
+}
